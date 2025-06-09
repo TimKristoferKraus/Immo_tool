@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Immobilienbewertung & Geo-Links</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; background: #f4f4f4; padding: 2rem; }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    input, select, button {
+      width: 100%; padding: 0.5rem; margin-top: 0.3rem; border-radius: 4px; border: 1px solid #ccc;
+    }
+    button { background: #007bff; color: white; border: none; font-weight: bold; margin-top: 1rem; }
+    button:hover { background: #0056b3; }
+    .geo-link { display: none; margin-top: 1rem; background: #28a745; color: white; text-align: center; padding: 0.5rem; text-decoration: none; border-radius: 4px; font-weight: bold; }
+    .debug, #result { margin-top: 1rem; background: white; padding: 1rem; border-radius: 4px; box-shadow: 0 0 5px #ccc; white-space: pre-line; }
+  </style>
+</head>
+<body>
+  <h1>Immobilienbewertung & Geo-Links</h1>
+  <label for="addressGeo">Adresse:</label>
+  <input id="addressGeo" type="text" placeholder="z.B. Musterstraße 1, 80331 München">
+  <button onclick="showGeoLinks()">Geo-Links anzeigen</button>
+  <a id="bayernAtlasLink" class="geo-link" href="#" target="_blank">BayernAtlas öffnen</a>
+  <a id="thueringenAtlasLink" class="geo-link" href="#" target="_blank">Thüringen-Atlas öffnen</a>
+
+  <h2>Gebäudebewertung (§ 46 GNotKG)</h2>
+  <label for="area">Wohnfläche (m²):</label>
+  <input id="area" type="number" placeholder="z.B. 120">
+  <label for="baujahr">Baujahr:</label>
+  <input id="baujahr" type="number" placeholder="z.B. 2010">
+  <label for="bodenrichtwert">Bodenrichtwert (€/m²):</label>
+  <input id="bodenrichtwert" type="number" placeholder="z.B. 400">
+  <label for="landArea">Grundstücksfläche (m²):</label>
+  <input id="landArea" type="number" placeholder="z.B. 300">
+  <button onclick="calculateBewertung()">Berechnung starten</button>
+
+  <h2>Nießbrauch/Wohnrecht (§ 52 GNotKG)</h2>
+  <label for="nie_value">Jahreswert des Rechts (€):</label>
+  <input id="nie_value" type="number" placeholder="z.B. 8400">
+  <label for="nie_age">Alter der berechtigten Person:</label>
+  <input id="nie_age" type="number" placeholder="z.B. 67">
+  <label for="nie_type">Art des Rechts:</label>
+  <select id="nie_type">
+    <option value="lebenslang">Lebenslang</option>
+    <option value="befristet">Befristet</option>
+  </select>
+  <label for="nie_years">(Bei Befristung) Laufzeit in Jahren:</label>
+  <input id="nie_years" type="number" placeholder="z.B. 10">
+  <button onclick="calculateNiessbrauch()">Nießbrauch berechnen</button>
+  <button onclick="downloadPDF()">PDF herunterladen</button>
+  <div id="result"></div>
+  <div id="debug"></div>
+</body>
+</html>
