@@ -1,19 +1,13 @@
-# Immobilienbewertung & Geo-Links Tool
+# Immobilienbewertung & Geo-Tool
 
 Dieses Tool berechnet:
-- Den Gebäudewert gemäß § 46 GNotKG (inkl. Faktor-Tabelle)
-- Den Kapitalwert eines Nießbrauchs gemäß § 52 GNotKG
+- Gebäudewert gemäß § 46 GNotKG (inkl. Faktor-Tabelle)
+- Kapitalwert eines Nießbrauchs gemäß § 52 GNotKG
 - Geo-Verlinkungen für BayernAtlas & Thüringen-Atlas
-- Download als PDF
+- Export als PDF
 
-## Vorschau
-👉 Live-Vorschau nach Deployment z. B. mit Vercel
+## Deployment
 
-## Deployment (z. B. mit Vercel)
-1. Repo auf GitHub anlegen
-2. Dateien hochladen
-3. Bei [vercel.com](https://vercel.com/import/git) verbinden und deployen
-
-## Struktur
-- `index.html`: Hauptseite mit Formular & JS
-- `vercel.json`: Routing-Definition für Vercel
+1. ZIP entpacken oder auf GitHub pushen
+2. Bei [vercel.com/import](https://vercel.com/import) als neues Projekt importieren
+3. Output Directory: `.`
