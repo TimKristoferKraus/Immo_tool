@@ -17,9 +17,154 @@
   </style>
 </head>
 <body>
-  <!-- vollständiger Body aus Canvas wurde hier ausgelassen, um Platz zu sparen -->
+  <<h1>Immobilienbewertung & Geo-Links</h1>
+  <label for="addressGeo">Adresse:</label>
+  <input id="addressGeo" type="text" placeholder="z.B. Musterstraße 1, 80331 München">
+  <button onclick="showGeoLinks()">Geo-Links anzeigen</button>
+  <a id="bayernAtlasLink" class="geo-link" href="#" target="_blank">BayernAtlas öffnen</a>
+  <a id="thueringenAtlasLink" class="geo-link" href="#" target="_blank">Thüringen-Atlas öffnen</a>
+
+  <h2>Gebäudebewertung (§ 46 GNotKG)</h2>
+  <label for="area">Wohnfläche (m²):</label>
+  <input id="area" type="number" placeholder="z.B. 120">
+
+  <label for="baujahr">Baujahr:</label>
+  <input id="baujahr" type="number" placeholder="z.B. 2010">
+
+  <label for="bodenrichtwert">Bodenrichtwert (€/m²):</label>
+  <input id="bodenrichtwert" type="number" placeholder="z.B. 400">
+
+  <label for="landArea">Grundstücksfläche (m²):</label>
+  <input id="landArea" type="number" placeholder="z.B. 300">
+
+  <button onclick="calculateBewertung()">Berechnung starten</button>
+
+  <h2>Nießbrauch/Wohnrecht (§ 52 GNotKG)</h2>
+  <label for="nie_value">Jahreswert des Rechts (€):</label>
+  <input id="nie_value" type="number" placeholder="z.B. 8400">
+
+  <label for="nie_age">Alter der berechtigten Person:</label>
+  <input id="nie_age" type="number" placeholder="z.B. 67">
+
+  <label for="nie_type">Art des Rechts:</label>
+  <select id="nie_type">
+    <option value="lebenslang">Lebenslang</option>
+    <option value="befristet">Befristet</option>
+  </select>
+
+  <label for="nie_years">(Bei Befristung) Laufzeit in Jahren:</label>
+  <input id="nie_years" type="number" placeholder="z.B. 10">
+
+  <button onclick="calculateNiessbrauch()">Nießbrauch berechnen</button>
+
+  <button onclick="downloadPDF()">PDF herunterladen</button>
+  <div id="result"></div>
+
+  <h3>Faktor-Tabelle (§ 46 GNotKG)</h3>
+  <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px; background: white; padding: 1rem; margin-top: 1rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+      <thead>
+        <tr style="background: #eee;">
+          <th style="text-align: left; padding: 6px;">Gebäudealter</th>
+          <th style="text-align: right; padding: 6px;">Faktor</th>
+        </tr>
+      </thead>
+      <tbody id="faktorTableBody"></tbody>
+    </table>
+  </div>
+  <div id="debug"></div>
   <script>
-    // Dein ganzer JS-Code kommt hier hin
+    const echteFaktoren = {
+    0: 21.859, 1: 21.638, 2: 21.418, 3: 21.197, 4: 20.976, 5: 20.755,
+    6: 20.534, 7: 20.314, 8: 20.093, 9: 19.872, 10: 19.651, 11: 19.430,
+    12: 19.210, 13: 18.989, 14: 18.768, 15: 18.547, 16: 18.326, 17: 18.106,
+    18: 17.885, 19: 17.664, 20: 17.443, 21: 17.222, 22: 17.002, 23: 16.781,
+    24: 16.560, 25: 16.339, 26: 16.118, 27: 15.898, 28: 15.677, 29: 15.456,
+    30: 15.235, 31: 15.014, 32: 14.794, 33: 14.573, 34: 14.352, 35: 14.131,
+    36: 13.910, 37: 13.690, 38: 13.469, 39: 13.248, 40: 13.027, 41: 12.806,
+    42: 12.586, 43: 12.365, 44: 12.144, 45: 11.923, 46: 11.702, 47: 11.482,
+    48: 11.261, 49: 11.040, 50: 10.819, 51: 10.598, 52: 10.378, 53: 10.157,
+    54: 9.936, 55: 9.715, 56: 9.494, 57: 9.274, 58: 9.053, 59: 8.832,
+    60: 8.611, 61: 8.390, 62: 8.170, 63: 7.949, 64: 7.728, 65: 7.507,
+    66: 7.286, 67: 7.066, 68: 6.845, 69: 6.624, 70: 6.624
+  };
+
+  const tableBody = document.getElementById('faktorTableBody');
+  Object.entries(echteFaktoren).forEach(([alter, faktor]) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td style='padding: 4px;'>${alter} Jahre</td><td style='padding: 4px; text-align: right;'>${parseFloat(faktor).toFixed(3)}</td>`;
+    tableBody.appendChild(row);
+  });
+
+  function showGeoLinks() {
+    const address = document.getElementById('addressGeo').value.trim();
+    if (!address) return;
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data[0]) {
+          const lat = data[0].lat;
+          const lon = data[0].lon;
+          document.getElementById('bayernAtlasLink').href = `https://geoportal.bayern.de/bayernatlas/?X=${lon}&Y=${lat}&zoom=14&bgLayer=atkis&lang=de&topic=kataster&catalogNodes=110&crosshair=true`;
+          document.getElementById('bayernAtlasLink').style.display = 'block';
+          document.getElementById('thueringenAtlasLink').href = `https://geoportal.thueringen.de/?lon=${lon}&lat=${lat}&zoom=14&layers=kataster`;
+          document.getElementById('thueringenAtlasLink').style.display = 'block';
+        }
+      });
+  }
+
+  function calculateBewertung() {
+    const area = parseFloat(document.getElementById("area").value);
+    const baujahr = parseInt(document.getElementById("baujahr").value);
+    const bodenrichtwert = parseFloat(document.getElementById("bodenrichtwert").value);
+    const landArea = parseFloat(document.getElementById("landArea").value);
+    if (!area || !baujahr || !bodenrichtwert || !landArea) return;
+    const age = new Date().getFullYear() - baujahr;
+    const faktor = echteFaktoren[age] || 0;
+    const wert = area * 165 * faktor;
+    const grundstueck = bodenrichtwert * landArea;
+    const gesamt = wert + grundstueck;
+    document.getElementById("result").innerText = `Wert Gebäude: ${wert.toLocaleString()} €
+Formel: ${area} × 165 × ${faktor.toFixed(3)} = ${wert.toLocaleString()} €
+Grundstück: ${grundstueck.toLocaleString()} €
+Gesamtwert: ${gesamt.toLocaleString()} €`;
+  }
+
+  function calculateNiessbrauch() {
+    const jahreswert = parseFloat(document.getElementById("nie_value").value);
+    const alter = parseInt(document.getElementById("nie_age").value);
+    const art = document.getElementById("nie_type").value;
+    const laufzeit = parseInt(document.getElementById("nie_years").value);
+    if (!jahreswert || isNaN(alter) || (art === "befristet" && !laufzeit)) return;
+    let faktor = 0;
+    if (art === "lebenslang") {
+      if (alter <= 30) faktor = 20;
+      else if (alter <= 50) faktor = 15;
+      else if (alter <= 70) faktor = 10;
+      else faktor = 5;
+    } else {
+      faktor = laufzeit;
+    }
+    const kapitalwert = jahreswert * faktor;
+    document.getElementById("result").innerText = `Kapitalwert Nießbrauch: ${kapitalwert.toLocaleString()} €
+Formel: ${jahreswert} € × ${faktor} = ${kapitalwert.toLocaleString()} € (Faktor: ${faktor})`;
+  }
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const text = document.getElementById("result").innerText || "Keine Ergebnisse vorhanden.";
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Immobilienbewertung', 10, 15);
+    doc.setFont('helvetica', '');
+    const lines = doc.splitTextToSize(text, 180);
+    doc.text(lines, 10, 25);
+    doc.save("Immobilienbewertung.pdf");
+  }
+</script>
+</body>
+</html>
   </script>
 </body>
 </html>
